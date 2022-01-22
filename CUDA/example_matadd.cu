@@ -5,14 +5,14 @@
 #define N 512
 #define BLOCK_SIZE 16
 
-// GPU 的 Kernel
+// Kernel of GPU
 __global__ void MatAdd(float *A, float *B, float *C)
 {
-    // 根據 CUDA 模型，算出當下 thread 對應的 x 與 y
+    // thread id of x, y according to designed CUDA model
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    // 換算成線性的 index
+    // Linear index
     int idx = j * N + i;
 
     if (i < N && j < N)
@@ -29,12 +29,12 @@ int main()
 
     int i;
 
-    // 宣告 Host 記憶體 (線性)
+    // Define host's memory
     h_A = (float *)malloc(N * N * sizeof(float));
     h_B = (float *)malloc(N * N * sizeof(float));
     h_C = (float *)malloc(N * N * sizeof(float));
 
-    // 初始化 Host 的數值
+    // initial host's variable
     for (i = 0; i < (N * N); i++)
     {
         h_A[i] = 1.0;
@@ -42,12 +42,12 @@ int main()
         h_C[i] = 0.0;
     }
 
-    // 宣告 Device (GPU) 記憶體
+    // Define device's (GPU) memory
     cudaMalloc((void **)&d_A, N * N * sizeof(float));
     cudaMalloc((void **)&d_B, N * N * sizeof(float));
     cudaMalloc((void **)&d_C, N * N * sizeof(float));
 
-    // 將資料傳給 Device
+    // pass data to device
     cudaMemcpy(d_A, h_A, N * N * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_B, h_B, N * N * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_C, h_C, N * N * sizeof(float), cudaMemcpyHostToDevice);
@@ -55,16 +55,16 @@ int main()
     dim3 blockSize(BLOCK_SIZE, BLOCK_SIZE);
     dim3 numBlock(N / BLOCK_SIZE, N / BLOCK_SIZE);
 
-    // 執行 MatAdd kernel
+    // implement kernel
     MatAdd<<<numBlock, blockSize>>>(d_A, d_B, d_C);
 
-    // 等待 GPU 所有 thread 完成
+    // wait finishing computing
     cudaDeviceSynchronize();
 
-    // 將 Device 的資料傳回給 Host
+    // pass data to host
     cudaMemcpy(h_C, d_C, N * N * sizeof(float), cudaMemcpyDeviceToHost);
 
-    // 驗證正確性
+    // evalution
     for (i = 0; i < (N * N); i++)
     {
         if (h_C[i] != 3.0)
