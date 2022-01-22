@@ -34,6 +34,9 @@ int main(){
     int size = n*sizeof(float);
     bool check = true;
 
+    int gridim = 2048;
+    int blockdim = n/gridim;
+
     // Memory for host
     float *a, *b, *c, *gpu_sum;
     a = (float*)malloc(size);
@@ -59,7 +62,7 @@ int main(){
     
 
     double t0 = ms_time();
-    gpu_adder_parallel<<<n,1>>>(gc, ga, gb);
+    gpu_adder_parallel<<<gridim,blockdim>>>(gc, ga, gb);
     // gpu_adder<<<1,1>>>(gc, ga, gb, n);
     double device_time = ms_time() - t0;
 
